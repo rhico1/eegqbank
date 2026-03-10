@@ -1,0 +1,4 @@
+{
+  "pretest": ["EEG001", "EEG003", "EEG005", "EEG007", "EEG009"],
+  "posttest": ["EEG002", "EEG004", "EEG006", "EEG008", "EEG010"]
+}

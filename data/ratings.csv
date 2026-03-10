@@ -1,0 +1,11 @@
+image_ID	expert_1	expert_2	expert_3	expert_4	expert_5	expert_6	expert_7	expert_8	expert_9	expert_10
+EEG001	GPD	GPD	GPD	GPD	GPD	GPD	GPD	GPD	GPD	LPD
+EEG002	Seizure	Seizure	Seizure	Seizure	Seizure	Seizure	Seizure	Seizure	GPD	GPD
+EEG003	LPD	LPD	LPD	LPD	LPD	LPD	GPD	GPD	BIPD	Other
+EEG004	GRDA	GRDA	GRDA	GRDA	GRDA	GRDA	LRDA	LRDA	LRDA	Other
+EEG005	BIPD	BIPD	BIPD	BIPD	LPD	LPD	LPD	GPD	GPD	Other
+EEG006	LRDA	LRDA	LRDA	LRDA	LRDA	LRDA	LRDA	GRDA	GRDA	Other
+EEG007	GPD	GPD	GPD	GPD	GPD	GPD	GPD	GPD	GPD	GPD
+EEG008	Seizure	Seizure	Seizure	Seizure	Seizure	Seizure	BIRD	BIRD	BIRD	GPD
+EEG009	BIRD	BIRD	BIRD	BIRD	Seizure	Seizure	Seizure	LRDA	LRDA	GPD
+EEG010	Normal variant	Normal variant	Normal variant	Normal variant	Normal variant	Normal variant	Normal variant	Normal variant	Other	Other

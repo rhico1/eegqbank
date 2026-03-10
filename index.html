@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EEG QBank</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ── User ID Modal (first visit) ─────────────────────────────────────── -->
+<div id="user-id-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2>Welcome to EEG QBank</h2>
+    <p>Enter your name or ID to track your progress locally on this device. This is stored only in your browser.</p>
+    <input type="text" id="user-id-input" placeholder="e.g. Dr. Smith, resident_01…" maxlength="60" autocomplete="off" />
+    <button class="btn btn-primary" id="user-id-confirm" style="width:100%">Start →</button>
+  </div>
+</div>
+
+<!-- ── App Shell ────────────────────────────────────────────────────────── -->
+<div id="app-shell">
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <div id="sidebar-logo">
+      <h1>EEG QBank</h1>
+      <p>Clinical EEG Self-Assessment</p>
+    </div>
+
+    <nav>
+      <div class="nav-item active" data-view="view-practice-setup">
+        <span class="nav-icon">⚡</span>
+        <span>Practice</span>
+      </div>
+      <div class="nav-item" data-view="view-exam-select">
+        <span class="nav-icon">📋</span>
+        <span>Exam</span>
+      </div>
+      <div class="nav-item" data-view="view-dashboard">
+        <span class="nav-icon">📊</span>
+        <span>Dashboard</span>
+      </div>
+    </nav>
+
+    <div id="sidebar-footer">
+      <div id="user-id-display">
+        <span>Signed in as</span>
+        <span id="user-name-display">—</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main id="main-content">
+
+    <!-- ── Practice: Session Setup ──────────────────────────────────────── -->
+    <div id="view-practice-setup" class="view active">
+      <div class="page-header">
+        <h2>Practice Mode</h2>
+        <p>Configure your session and start reading EEGs.</p>
+      </div>
+      <div class="setup-content">
+
+        <div class="form-group">
+          <label>Number of cases</label>
+          <div class="slider-row">
+            <span>1</span>
+            <input type="range" id="practice-count" min="1" max="10" value="5" />
+            <span>10</span>
+            <span class="slider-value" id="count-display">5</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Feedback mode</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" data-mode="immediate">Immediate</button>
+            <button class="toggle-btn" data-mode="endofset">End of Set</button>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;line-height:1.5">
+            <strong style="color:var(--text)">Immediate:</strong> Review each case after finishing the set.<br>
+            <strong style="color:var(--text)">End of Set:</strong> See summary table only — no per-case drill-down.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label>Difficulty filter</label>
+          <div class="diff-filter-group">
+            <button class="diff-filter-btn active" data-diff="all">All</button>
+            <button class="diff-filter-btn" data-diff="easy">Easy only</button>
+            <button class="diff-filter-btn" data-diff="medium">Medium only</button>
+            <button class="diff-filter-btn" data-diff="hard">Hard only</button>
+            <button class="diff-filter-btn" data-diff="mixed">Mixed (medium + hard)</button>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg" id="start-practice-btn">Start Session →</button>
+      </div>
+    </div>
+
+    <!-- ── Practice: Case View ──────────────────────────────────────────── -->
+    <div id="view-case" class="view">
+      <!-- Rendered dynamically by practice.js / ui.js -->
+    </div>
+
+    <!-- ── Practice: Results Summary ───────────────────────────────────── -->
+    <div id="view-results" class="view">
+      <!-- Rendered dynamically -->
+    </div>
+
+    <!-- ── Practice: Per-case Feedback ─────────────────────────────────── -->
+    <div id="view-feedback" class="view">
+      <!-- Rendered dynamically -->
+    </div>
+
+    <!-- ── Exam: Select ─────────────────────────────────────────────────── -->
+    <div id="view-exam-select" class="view">
+      <div class="page-header">
+        <h2>Exam Mode</h2>
+        <p>Fixed case sets to measure pre/post learning. No feedback during the exam.</p>
+      </div>
+      <div class="exam-cards">
+
+        <div class="exam-card" data-exam="pretest">
+          <h3>📝 Pre-test</h3>
+          <p>5 cases from the pre-test pool. Take this before your practice sessions to establish a baseline.</p>
+          <div class="exam-card-status not-done">
+            <span>○</span> Not yet taken
+          </div>
+          <button class="btn btn-primary exam-start-btn">Start</button>
+        </div>
+
+        <div class="exam-card" data-exam="posttest">
+          <h3>🎯 Post-test</h3>
+          <p>5 cases from the post-test pool. Take this after sufficient practice to measure your improvement.</p>
+          <div class="exam-card-status not-done">
+            <span>○</span> Not yet taken
+          </div>
+          <button class="btn btn-primary exam-start-btn">Start</button>
+        </div>
+
+      </div>
+
+      <!-- Dose-response preview on exam page -->
+      <div style="padding: 0 32px 32px; max-width: 800px">
+        <div class="card">
+          <h3 style="font-size:0.8rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:16px">
+            Exam Scores
+          </h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div>
+              <div class="stat-label">Pre-test</div>
+              <div id="pretest-score-exam" style="margin-top:4px"><span class="text-muted">Not taken</span></div>
+            </div>
+            <div>
+              <div class="stat-label">Post-test</div>
+              <div id="posttest-score-exam" style="margin-top:4px"><span class="text-muted">Not taken</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Exam: Case View ──────────────────────────────────────────────── -->
+    <div id="view-exam-case" class="view">
+      <!-- Rendered dynamically -->
+    </div>
+
+    <!-- ── Exam: Results ────────────────────────────────────────────────── -->
+    <div id="view-exam-results" class="view">
+      <!-- Rendered dynamically -->
+    </div>
+
+    <!-- ── Exam: Per-case Feedback ──────────────────────────────────────── -->
+    <div id="view-exam-feedback" class="view">
+      <!-- Rendered dynamically -->
+    </div>
+
+    <!-- ── Dashboard ─────────────────────────────────────────────────────── -->
+    <div id="view-dashboard" class="view">
+      <div class="page-header">
+        <h2>Dashboard</h2>
+        <p>Your cumulative performance across all practice sessions.</p>
+      </div>
+      <div class="dashboard-content">
+
+        <!-- Stat cards row -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Cases Rated</div>
+            <div class="stat-value" id="stat-total">0</div>
+            <div class="stat-sub">practice sessions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Overall Accuracy</div>
+            <div class="stat-value" id="stat-accuracy">—</div>
+            <div class="stat-sub">all-time</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Current Streak</div>
+            <div class="stat-value" id="stat-streak">0</div>
+            <div class="stat-sub">consecutive days</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Practice Dose</div>
+            <div class="stat-value" id="stat-practice-dose">0</div>
+            <div class="stat-sub">cases since pre-test</div>
+          </div>
+        </div>
+
+        <!-- Exam scores row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+          <div class="stat-card">
+            <div class="stat-label">Pre-test Score</div>
+            <div style="margin-top:8px" id="pretest-score"><span class="text-muted">Not taken</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Post-test Score</div>
+            <div style="margin-top:8px" id="posttest-score"><span class="text-muted">Not taken</span></div>
+          </div>
+        </div>
+
+        <!-- Dose-response chart -->
+        <div class="dose-response-card">
+          <h3>Dose-Response</h3>
+          <div class="dose-response-chart">
+            <canvas id="chart-dose-response"></canvas>
+          </div>
+        </div>
+
+        <!-- Charts grid -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h3>Accuracy by Category</h3>
+            <div class="chart-container">
+              <canvas id="chart-category"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3>Accuracy by Difficulty</h3>
+            <div class="chart-container">
+              <canvas id="chart-difficulty"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sparkline -->
+        <div class="chart-card" style="margin-bottom:24px">
+          <h3>Cases Over Time</h3>
+          <div class="chart-container">
+            <canvas id="chart-sparkline"></canvas>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="dashboard-actions">
+          <button class="btn btn-secondary" id="export-data-btn">⬇ Export Data</button>
+          <button class="btn btn-danger" id="reset-data-btn">↺ Reset All Data</button>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>

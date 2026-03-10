@@ -1,0 +1,12 @@
+{
+  "EEG001": "Generalized periodic sharp-wave complexes at ~1.5 Hz with bifrontal predominance — classic GPD morphology.",
+  "EEG002": "Rhythmic ictal discharges with clear evolution in frequency and field — electrographic seizure.",
+  "EEG003": "Periodic sharp waves maximal over the left hemisphere at C3-P3, consistent with LPD.",
+  "EEG004": "Generalized rhythmic delta activity at 1–2 Hz without periodic morphology, diffuse distribution — GRDA.",
+  "EEG005": "Bilateral but asynchronous periodic discharges — left > right, independent generators — classic BIPD morphology.",
+  "EEG006": "Rhythmic delta activity lateralized to the right hemisphere (C4-P4 maximum), no periodicity — LRDA.",
+  "EEG007": "High-amplitude generalized periodic discharges at 2 Hz with triphasic morphology — GPD with triphasic waves.",
+  "EEG008": "Brief rhythmic discharge with evolution in frequency (3→8 Hz) and spatial spread — BIRD progressing to seizure.",
+  "EEG009": "Brief runs of rhythmic theta over the left temporal region, < 10 seconds — BIRD, difficult to distinguish from brief seizure.",
+  "EEG010": "Posterior dominant rhythm 10 Hz attenuating with eye opening, normal sleep features — normal variant / benign finding."
+}
