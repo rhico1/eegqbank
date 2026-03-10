@@ -34,29 +34,67 @@ async function fetchJson(url) {
 }
 
 /**
- * Parse the tab-separated ratings CSV and compute derived fields.
+ * Normalize a raw label string from CSV to a canonical LABELS entry.
+ * Case-insensitive; handles common abbreviation variants.
+ * Returns the raw label unchanged if no mapping is found (so unknown
+ * labels still appear in vote distributions rather than being silently dropped).
+ */
+function normalizeLabel(raw) {
+  const s = raw.trim().toLowerCase().replace(/[\s_-]+/g, ' ');
+  const map = {
+    'gpd': 'GPD',
+    'generalized periodic discharge': 'GPD',
+    'generalized periodic discharges': 'GPD',
+    'lpd': 'LPD',
+    'lateralized periodic discharge': 'LPD',
+    'lateralized periodic discharges': 'LPD',
+    'grda': 'GRDA',
+    'generalized rhythmic delta activity': 'GRDA',
+    'lrda': 'LRDA',
+    'lateralized rhythmic delta activity': 'LRDA',
+    'bipd': 'BIPD',
+    'bilateral independent periodic discharge': 'BIPD',
+    'bilateral independent periodic discharges': 'BIPD',
+    'bird': 'BIRD',
+    'brief ictal rhythmic discharge': 'BIRD',
+    'brief ictal rhythmic discharges': 'BIRD',
+    'seizure': 'Seizure',
+    'sz': 'Seizure',
+    'ictal': 'Seizure',
+    'normal variant': 'Normal variant',
+    'normal variants': 'Normal variant',
+    'nv': 'Normal variant',
+    'other': 'Other',
+  };
+  return map[s] ?? raw.trim();
+}
+
+/**
+ * Parse the ratings CSV and compute derived fields.
  *
- * CSV format:
+ * CSV format (tab- or comma-delimited, auto-detected):
  *   image_ID  expert_1  expert_2  …
  *   EEG001    GPD       GPD       …
  */
 function parseRatingsCSV(text, annJson) {
   const lines = text.trim().split('\n').map(l => l.trim()).filter(Boolean);
-  const headers = lines[0].split('\t');
+  // Auto-detect delimiter: tab or comma
+  const delim = lines[0].includes('\t') ? '\t' : ',';
+  const headers = lines[0].split(delim);
   const expertCols = headers.slice(1); // expert_1, expert_2, …
 
   const result = {};
 
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split('\t');
+    const cols = lines[i].split(delim);
     const imageId = cols[0].trim();
     const votes = {};
 
     expertCols.forEach((_, idx) => {
-      const label = (cols[idx + 1] || '').trim();
-      if (label) {
-        votes[label] = (votes[label] || 0) + 1;
-      }
+      const raw = (cols[idx + 1] || '').trim();
+      if (!raw) return;
+      const label = normalizeLabel(raw);
+      votes[label] = (votes[label] || 0) + 1;
     });
 
     const numExperts = Object.values(votes).reduce((a, b) => a + b, 0);
