@@ -3,6 +3,7 @@
  */
 
 import { LABELS, cases, isCorrect, expertMatchCount } from './data.js';
+// LABELS is kept as a fallback; per-case labels come from c.labels (set via labels.txt)
 
 // ── Navigation ───────────────────────────────────────────────────────────────
 
@@ -111,7 +112,7 @@ export function renderCaseView({ viewId, caseId, caseIndex, totalCases, onSubmit
 
     <div class="label-panel">
       <div class="label-grid">
-        ${LABELS.map(l => `<button class="label-btn" data-label="${l}">${l}</button>`).join('')}
+        ${(c.labels ?? LABELS).map(l => `<button class="label-btn" data-label="${l}">${l}</button>`).join('')}
       </div>
     </div>
 

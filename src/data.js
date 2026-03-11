@@ -19,10 +19,41 @@ export async function loadAllData() {
   annotations = annJson;
   examSets = examJson;
   cases = parseRatingsCSV(csvText, annJson);
+
+  // For each unique set name, fetch data/images/{set}/labels.txt
+  // and attach the parsed label list to every case in that set.
+  const setNames = [...new Set(
+    Object.values(cases).map(c => c.setName).filter(Boolean)
+  )];
+
+  const setLabels = {};
+  await Promise.all(setNames.map(async (setName) => {
+    try {
+      const text = await fetchText(`data/images/${setName}/labels.txt`);
+      setLabels[setName] = parseLabels(text);
+    } catch {
+      // labels.txt missing — fall back to the global LABELS list
+      setLabels[setName] = [...LABELS];
+    }
+  }));
+
+  // Attach resolved labels array to each case object
+  Object.values(cases).forEach(c => {
+    c.labels = c.setName
+      ? (setLabels[c.setName] ?? [...LABELS])
+      : [...LABELS];
+  });
+}
+
+/**
+ * Parse a labels.txt file: split on commas, newlines, or tabs; trim; drop empties.
+ */
+function parseLabels(text) {
+  return text.split(/[\n,\t]+/).map(s => s.trim()).filter(Boolean);
 }
 
 async function fetchText(url) {
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: 'no-cache' });
   if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
   return res.text();
 }
@@ -73,25 +104,45 @@ function normalizeLabel(raw) {
  * Parse the ratings CSV and compute derived fields.
  *
  * CSV format (tab- or comma-delimited, auto-detected):
- *   image_ID  expert_1  expert_2  …
- *   EEG001    GPD       GPD       …
+ *
+ *   Without set column (flat images folder):
+ *     image_ID, expert_1, expert_2, …
+ *     EEG001,   GPD,      GPD,      …
+ *
+ *   With set column (images in subfolders):
+ *     image_ID, set,      expert_1, expert_2, …
+ *     EEG001,   periodic, GPD,      GPD,      …
+ *     EEG011,   variants, IED,      BETS,     …
+ *
+ * When a `set` column is present, imagePath becomes
+ * data/images/{set}/{imageId}.png and the case's label choices
+ * are loaded from data/images/{set}/labels.txt in loadAllData().
  */
 function parseRatingsCSV(text, annJson) {
   const lines = text.trim().split('\n').map(l => l.trim()).filter(Boolean);
   // Auto-detect delimiter: tab or comma
   const delim = lines[0].includes('\t') ? '\t' : ',';
-  const headers = lines[0].split(delim);
-  const expertCols = headers.slice(1); // expert_1, expert_2, …
+  const headers = lines[0].split(delim).map(h => h.trim());
+
+  // Optional 'set' column at position 1 (case-insensitive)
+  const hasSetCol = headers[1]?.toLowerCase() === 'set';
+  const expertStart = hasSetCol ? 2 : 1;
+  const expertCols = headers.slice(expertStart);
 
   const result = {};
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(delim);
     const imageId = cols[0].trim();
+    const setName = hasSetCol ? cols[1].trim() : null;
+    const imagePath = setName
+      ? `data/images/${setName}/${imageId}.png`
+      : `data/images/${imageId}.png`;
+
     const votes = {};
 
     expertCols.forEach((_, idx) => {
-      const raw = (cols[idx + 1] || '').trim();
+      const raw = (cols[expertStart + idx] || '').trim();
       if (!raw) return;
       const label = normalizeLabel(raw);
       votes[label] = (votes[label] || 0) + 1;
@@ -109,7 +160,8 @@ function parseRatingsCSV(text, annJson) {
 
     result[imageId] = {
       id: imageId,
-      imagePath: `data/images/${imageId}.png`,
+      setName,                        // null if no set column
+      imagePath,
       voteDistribution: votes,        // { GPD: 8, LPD: 2 }
       consensusLabels,                // array — usually 1 item, >1 on tie
       consensusLabel: consensusLabels[0], // primary display label
@@ -117,6 +169,7 @@ function parseRatingsCSV(text, annJson) {
       numExperts,
       difficulty: getDifficulty(consensusPct),
       annotation: annJson[imageId] || null,
+      // labels: [] — attached after loadAllData() reads labels.txt
     };
   }
 
